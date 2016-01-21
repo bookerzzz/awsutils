@@ -122,7 +122,8 @@ func ResolveStatus(t time.Time) string {
 }
 
 func main() {
-	app := cli.NewApp()
+	var app *cli.App
+	app = cli.NewApp()
 	app.Name = "awsutils"
 	app.Usage = "automation of Amazon Web Services configurations through their API"
 	app.EnableBashCompletion = true
@@ -187,7 +188,7 @@ func main() {
 							fmt.Fprintf(w, "%+v\n", d.Origins.Items[0]["DomainName"])
 							json, _ := json.MarshalIndent(d, "", "  ")
 
-							fn := fmt.Sprintf("%s.json", d.Origins.Items[0]["DomainName"])
+							fn := fmt.Sprintf("%s.json", d.Origins.Items[0]["Id"])
 							f, err := os.Create(fn)
 							if err != nil {
 								cwd, _ := os.Getwd()

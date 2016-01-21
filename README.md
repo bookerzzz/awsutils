@@ -2,6 +2,11 @@
 
 Utililities to aid in the automation of Amazon Web Services configurations through their API.
 
+## Install
+```bash
+go install github.com/bookerzzz/awsutils
+```
+
 ## Assumptions
 
 This utility makes use of the AWS command line interface and assumes it has been correctly configured. For
@@ -12,3 +17,13 @@ and http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.htm
 
 * iam certs - List installed certificates and statuses
 * cloudfront export-configs - Export cloudfront distribution configs (as json) to current working directory
+
+## Usage
+```bash
+awsutils iam certs
+# prints list of certification available on AWS
+
+awsutils cloudfront export-configs
+# exports distribution configs from AWS CloudFront service into json
+# files (named {dist-origin-id}.json) into current working directory.
+```
