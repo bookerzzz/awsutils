@@ -13,10 +13,10 @@ This utility makes use of the AWS command line interface and assumes it has been
 more assistance with this you can refer to http://docs.aws.amazon.com/cli/latest/userguide/installing.html#install-bundle-other-os
 and http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 
-## Available commands
+## Available commands (so far)
 
-* iam certs - List installed certificates and statuses
-* cloudfront export-configs - Export cloudfront distribution configs (as json) to current working directory
+* **iam certs** - List installed certificates and statuses
+* **cloudfront export-configs** - Export cloudfront distribution configs (as json) to current working directory
 
 ## Usage
 ```bash
