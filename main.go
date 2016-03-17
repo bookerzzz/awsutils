@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -35,6 +37,8 @@ type CloudFrontListDistributionsResponse struct {
 
 // CloudFrontDistributionConfig model
 type CloudFrontDistributionConfig struct {
+	ID                string `json:"Id,omitempty"`
+	Status            string `json:"Status,omitempty"`
 	WebACLID          string `json:"WebACLId"`
 	DefaultRootObject string
 	PriceClass        string
@@ -108,6 +112,39 @@ type CloudFrontDistributionConfig struct {
 		Quantity int
 	}
 }
+
+// DistSummary for summary output of a cloudfront distribution
+type DistSummary struct {
+	ID     string
+	Domain string
+	Alias  string
+	Origin string
+	Status string
+}
+
+// ByAlias implements sort.Interface for []DistSummary based on
+// the Alias field.
+type ByAlias []DistSummary
+
+func (a ByAlias) Len() int           { return len(a) }
+func (a ByAlias) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByAlias) Less(i, j int) bool { return a[i].Alias < a[j].Alias }
+
+// ByOrigin implements sort.Interface for []DistSummary based on
+// the Alias field.
+type ByOrigin []DistSummary
+
+func (a ByOrigin) Len() int           { return len(a) }
+func (a ByOrigin) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByOrigin) Less(i, j int) bool { return a[i].Origin < a[j].Origin }
+
+// ByStatus implements sort.Interface for []DistSummary based on
+// the Alias field.
+type ByStatus []DistSummary
+
+func (a ByStatus) Len() int           { return len(a) }
+func (a ByStatus) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStatus) Less(i, j int) bool { return a[i].Status < a[j].Status }
 
 // ResolveStatus resolve a certificates expiry status
 func ResolveStatus(t time.Time) string {
@@ -199,6 +236,102 @@ func main() {
 							f.Close()
 						}
 						w.Flush()
+					},
+				},
+				{
+					Name:  "dists",
+					Usage: "summarize the cloudfront distribution configurations",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "order-by",
+							Value: "alias",
+							Usage: "sort results on alias|origin|status",
+						},
+						cli.BoolFlag{
+							Name:  "csv",
+							Usage: "output as csv",
+						},
+					},
+					Action: func(c *cli.Context) {
+						out, err := exec.Command("aws", "cloudfront", "list-distributions").Output()
+						if err != nil {
+							fmt.Println(err.Error())
+							return
+						}
+
+						var r CloudFrontListDistributionsResponse
+						err = json.Unmarshal(out, &r)
+						if err != nil {
+							fmt.Println(err.Error())
+							return
+						}
+
+						var list []DistSummary
+						for _, d := range r.Distributionlist.Items {
+							id := d.ID
+							distDomain := d.DomainName
+							status := d.Status
+							origin := ""
+							alias := ""
+
+							if len(d.Origins.Items) > 0 {
+								for _, o := range d.Origins.Items {
+									if op, ok := o["OriginPath"].(string); ok && op == "" {
+										origin = o["DomainName"].(string)
+									}
+								}
+							}
+							if len(d.Aliases.Items) > 0 {
+								alias = strings.Join(d.Aliases.Items, ",")
+							}
+
+							list = append(list, DistSummary{ID: id, Domain: distDomain, Alias: alias, Origin: origin, Status: status})
+						}
+
+						switch c.String("order-by") {
+						case "origin":
+							sort.Sort(ByOrigin(list))
+						case "status":
+							sort.Sort(ByStatus(list))
+						case "alias":
+							sort.Sort(ByAlias(list))
+						default:
+							fmt.Println("Unrecognised value for", c.String("order-by"), ". Sorting by alias instead.")
+							sort.Sort(ByAlias(list))
+						}
+
+						if c.Bool("csv") {
+							fmt.Println("ID;Domain;Alias;Origin;Status")
+							for _, s := range list {
+								fmt.Printf(`"%s";"%s";"%s";"%s";"%s"`, s.ID, s.Domain, s.Alias, s.Origin, s.Status)
+								fmt.Println()
+							}
+						} else {
+							w := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+							fmt.Fprint(w, "ID\tDomain\tAlias\tOrigin\tStatus\n")
+							for _, s := range list {
+								fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", s.ID, s.Domain, s.Alias, s.Origin, s.Status)
+							}
+							w.Flush()
+						}
+
+						// w := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+						// fmt.Fprint(w, "DomainName\n")
+						// for _, d := range r.Distributionlist.Items {
+						// 	fmt.Fprintf(w, "%+v\n", d.Origins.Items[0]["DomainName"])
+						// 	json, _ := json.MarshalIndent(d, "", "  ")
+						//
+						// 	fn := fmt.Sprintf("%s.json", d.Origins.Items[0]["Id"])
+						// 	f, err := os.Create(fn)
+						// 	if err != nil {
+						// 		cwd, _ := os.Getwd()
+						// 		fmt.Printf("Unable to create file '%s' in '%s'", fn, cwd)
+						// 		continue
+						// 	}
+						// 	f.Write(json)
+						// 	f.Close()
+						// }
+						// w.Flush()
 					},
 				},
 			},

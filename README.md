@@ -17,6 +17,7 @@ and http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.htm
 
 * **iam certs** - List installed certificates and statuses
 * **cloudfront export-configs** - Export cloudfront distribution configs (as json) to current working directory
+* **awsutils cloudfront dists** - List configured cloudfront distributions and statuses
 
 ## Usage
 ```bash
@@ -26,4 +27,9 @@ awsutils iam certs
 awsutils cloudfront export-configs
 # exports distribution configs from AWS CloudFront service into json
 # files (named {dist-origin-id}.json) into current working directory.
+
+awsutils cloudfront dists [--order-by=alias|origin|status] [--csv]
+# prints list of distributions configured on AWS sorted on alias
+# or optionally sorted on another supported value. Set output mode
+# --csv if needed
 ```
