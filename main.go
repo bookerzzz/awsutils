@@ -314,24 +314,6 @@ func main() {
 							}
 							w.Flush()
 						}
-
-						// w := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
-						// fmt.Fprint(w, "DomainName\n")
-						// for _, d := range r.Distributionlist.Items {
-						// 	fmt.Fprintf(w, "%+v\n", d.Origins.Items[0]["DomainName"])
-						// 	json, _ := json.MarshalIndent(d, "", "  ")
-						//
-						// 	fn := fmt.Sprintf("%s.json", d.Origins.Items[0]["Id"])
-						// 	f, err := os.Create(fn)
-						// 	if err != nil {
-						// 		cwd, _ := os.Getwd()
-						// 		fmt.Printf("Unable to create file '%s' in '%s'", fn, cwd)
-						// 		continue
-						// 	}
-						// 	f.Write(json)
-						// 	f.Close()
-						// }
-						// w.Flush()
 					},
 				},
 			},
